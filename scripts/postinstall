@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# (C) 2022 Henri Shustak
+# Licenced under the Apache Licence
+# http://www.apache.org/licenses/LICENSE-2.0
+# Latest copy of this script is available from : http://www.github.com/henri/install-rosetta2
+
+# About : This script installs rosseta on apple silicon systems.
+# This script requires an internet connection to work.
+
+
+# Note : This script is going to exit with non zero exit value if
+#        the system has no internet connection or Apple servers not accessable
+#
+# Note : This script will not update rosetta just install roseta, 
+#        if not currelty installed and running.
+
+
+# intenral variabls and system tools
+SOFTWAREUPDATE="/usr/sbin/softwareupdate"
+PGREP="/usr/bin/pgrep"
+ARCH="/usr/bin/arch"
+
+
+# make sure tools are accessable
+if [ -f "${SOFTWAREUPDATE}" ] && [ -f "${PGREP}" ] && [ -f "${ARCH}" ] ; then
+
+	# check if we are runing on AMD64 systems (Apple Silicon)
+	if [ "${ARCH}" == "arm64" ] ; then
+	
+		# check if rosetta has already been installed 
+		ROSETTA_INSTALLED=`if ${PGREP} oahd >/dev/null 2>&1 ; then echo "YES"; else echo "NO" ; fi`
+	
+		if [ "${ROSETTA_INSTALLED}" == "NO" ] ; then
+			# attempt to install rosetta 2 
+			${SOFTWAREUPDATE} --install-rosetta --agree-to-license >/dev/null 2>&1
+			EXIT_VALUE=$?
+		else
+			EXIT_VALUE=0
+		fi
+	
+	else
+		EXIT_VALUE=0
+	fi
+
+else
+	EXIT_VALUE=129
+fi 
+
+exit ${EXIT_VALUE}
+
+
