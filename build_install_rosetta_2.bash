@@ -13,12 +13,11 @@ package_output_name="install_rosetta_2.pkg"
 # Intenral variables
 exit_status=0
 parent_directory="`dirname \"${0}\"`" ; if [ "`echo "${parent_directory}" | grep -e "^/"`" == "" ] ; then parent_directory="`pwd`/${parent_directory}" ; fi
-temporary_build_directory=`mktemp -d /tmp/bluetoothoff_build_directory.XXXXXXXXXXXXX`
+temporary_build_directory=`mktemp -d /tmp/rosetta_2_build_directory.XXXXXXXXXXXXX`
 realitve_package_output_directory="build_output/`date \"+%Y-%m-%d_%H.%M.%S\"`"
 absolute_path_to_package_build_directory="${parent_directory}/${realitve_package_output_directory}"
 absolute_path_to_package_build="${absolute_path_to_package_build_directory}/${package_output_name}"
 realitve_script_diectory_name="scripts"
-
 
 function clean_exit {
 	cd /
@@ -33,6 +32,11 @@ if [ $? != 0 ] ; then echo "ERROR! : Unable to swtich to temporary build directo
 # populate temporary build directory with approriate files
 rsync -aE "${parent_directory}/root" "${parent_directory}/scripts" "./"
 if [ $? != 0 ] ; then echo "ERROR! : Unable to copy files to temporary build directory." ; exit_status=1 ; clean_exit ; fi
+
+# clean up any files found int the temporary root build directory
+rm -f "./root/.DS_Store"
+rm -f "./root/.gitignore"
+
 
 # generate build output directory
 mkdir "${absolute_path_to_package_build_directory}"
