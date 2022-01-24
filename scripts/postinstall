@@ -10,23 +10,28 @@
 
 
 # Note : This script is going to exit with non zero exit value if
-#        the system has no internet connection or Apple servers not accessable
+#        the system has no internet connection or Apple servers not accessible
 #
-# Note : This script will not update rosetta just install roseta, 
-#        if not currelty installed and running.
+# Note : This script will not update rosetta just install rosetta, 
+#        if not currently installed and running.
 
 
-# intenral variabls and system tools
+# internal variable and system tools
 SOFTWAREUPDATE="/usr/sbin/softwareupdate"
 PGREP="/usr/bin/pgrep"
 ARCH="/usr/bin/arch"
 
+# sometimes rosetta takes a while to start up. 
+# How long are we going to wait for it to start before giving up (approximately)
+ROSETTA_MAX_WAIT_TIME_SECONDS=120
+SECONDS_WAITED=0
 
-# make sure tools are accessable
+# make sure tools are accessible
 if [ -f "${SOFTWAREUPDATE}" ] && [ -f "${PGREP}" ] && [ -f "${ARCH}" ] ; then
 
 	# check if we are runing on AMD64 systems (Apple Silicon)
-	if [ "${ARCH}" == "arm64" ] ; then
+	SYSTEM_ARCH=`"${ARCH}"`
+	if [ "${SYSTEM_ARCH}" == "arm64" ] ; then
 	
 		# check if rosetta has already been installed 
 		ROSETTA_INSTALLED=`if ${PGREP} oahd >/dev/null 2>&1 ; then echo "YES"; else echo "NO" ; fi`
@@ -35,6 +40,21 @@ if [ -f "${SOFTWAREUPDATE}" ] && [ -f "${PGREP}" ] && [ -f "${ARCH}" ] ; then
 			# attempt to install rosetta 2 
 			${SOFTWAREUPDATE} --install-rosetta --agree-to-license >/dev/null 2>&1
 			EXIT_VALUE=$?
+			if [ "${EXIT_VALUE}" != 0 ] ; then exit ${EXIT_VALUE} ; fi
+			
+			# seems like rosetta has installed but now we need to wait for it to start up.
+			EXIT_VALUE=50
+			while [ ${SECONDS_WAITED} -le ${ROSETTA_MAX_WAIT_TIME_SECONDS} ] ; do
+				sleep 1
+				((SECONDS_WAITED=${SECONDS_WAITED}+1))
+				ROSETTA_INSTALLED=`if ${PGREP} oahd >/dev/null 2>&1 ; then echo "YES"; else echo "NO" ; fi`
+				if [ "${ROSETTA_INSTALLED}" == "YES" ] ; then
+					EXIT_VALUE=0
+					break
+				fi
+			done
+			
+
 		else
 			EXIT_VALUE=0
 		fi
